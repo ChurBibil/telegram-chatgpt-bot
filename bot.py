@@ -1,9 +1,6 @@
-from flask import Flask, request
-from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import os
-
-app = Flask(__name__)
 
 # Установка токена вашего Telegram бота
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -11,9 +8,6 @@ bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 # Убедитесь, что переменная окружения установлена правильно
 if not bot_token:
     raise ValueError("Invalid Telegram bot token.")
-
-bot = Bot(token=bot_token)
-dispatcher = Dispatcher(bot, None, use_context=True)
 
 # Словарь для хранения списка фильмов и сериалов
 films = {
@@ -27,8 +21,6 @@ def start(update: Update, context: CallbackContext) -> None:
                               'Используй /add для добавления в список, /watched для отметки просмотренных, '
                               'и /list для просмотра списков.')
 
-dispatcher.add_handler(CommandHandler("start", start))
-
 # Функция-обработчик команды /add для добавления фильма или сериала в список для просмотра
 def add(update: Update, context: CallbackContext) -> None:
     msg = update.message.text.split(' ', 1)
@@ -41,8 +33,6 @@ def add(update: Update, context: CallbackContext) -> None:
             update.message.reply_text(f'Фильм/сериал "{film_name}" уже добавлен в список.')
     else:
         update.message.reply_text('Используйте команду /add <название фильма или сериала>.')
-
-dispatcher.add_handler(CommandHandler("add", add))
 
 # Функция-обработчик команды /watched для отметки просмотренного фильма или сериала
 def watched(update: Update, context: CallbackContext) -> None:
@@ -60,8 +50,6 @@ def watched(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text('Используйте команду /watched <название фильма или сериала>.')
 
-dispatcher.add_handler(CommandHandler("watched", watched))
-
 # Функция-обработчик команды /list для вывода списков фильмов и сериалов
 def list_films(update: Update, context: CallbackContext) -> None:
     to_watch_str = "\n".join(films['to_watch']) if films['to_watch'] else "Список для просмотра пуст."
@@ -69,18 +57,31 @@ def list_films(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(f'<b>Список для просмотра:</b>\n{to_watch_str}\n\n<b>Список просмотренных:</b>\n{watched_str}',
                               parse_mode='HTML')
 
-dispatcher.add_handler(CommandHandler("list", list_films))
+# Функция для обработки сообщений
+def handle_message(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Прости, я не понимаю тебя. Используй /start для начала работы.')
 
-@app.route('/hook', methods=['POST'])
-def webhook_handler():
-    update = Update.de_json(request.get_json(force=True), bot)
-    dispatcher.process_update(update)
-    return 'ok'
+def main() -> None:
+    # Создаем Updater и передаем ему токен вашего бота
+    updater = Updater(bot_token)
 
-def set_webhook():
-    webhook_url = 'https://telegram-chatgpt-bot-3ai3.onrender.com/hook'  # Замените на URL вашего сервера
-    bot.set_webhook(webhook_url)
+    # Получаем диспетчер от Updater
+    dispatcher = updater.dispatcher
+
+    # Регистрируем обработчики команд
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("add", add))
+    dispatcher.add_handler(CommandHandler("watched", watched))
+    dispatcher.add_handler(CommandHandler("list", list_films))
+
+    # Регистрируем обработчик сообщений, который реагирует на текстовые сообщения
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
+    # Запускаем polling
+    updater.start_polling()
+
+    # Останавливаем бота при нажатии Ctrl+C
+    updater.idle()
 
 if __name__ == '__main__':
-    set_webhook()
-    app.run(port=8443)
+    main()
