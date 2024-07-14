@@ -5,6 +5,14 @@ import os
 # Установка токена вашего Telegram бота
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 
+CHAT_ID = os.getenv('694294456')
+
+# Функция для отправки уведомления
+def send_notification(message):
+    bot = Bot(token=TOKEN)
+    bot.send_message(chat_id=CHAT_ID, text=message)
+
+
 # Убедитесь, что переменная окружения установлена правильно
 if not bot_token:
     raise ValueError("Invalid Telegram bot token.")
