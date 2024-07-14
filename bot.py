@@ -1,10 +1,17 @@
+import os
 from telegram import Update
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackContext
 import openai
-import os
+
+# Получаем токен Telegram бота из переменной окружения
+bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+
+# Проверяем, что токен был успешно загружен
+if not bot_token:
+    raise ValueError("Telegram bot token not found in environment variables.")
 
 # Установка токена вашего Telegram бота
-updater = Updater("YOUR_BOT_TOKEN", use_context=True)
+updater = Updater(bot_token, use_context=True)
 
 # Функция-обработчик команды /start
 def start(update: Update, context: CallbackContext) -> None:
