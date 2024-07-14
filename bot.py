@@ -1,8 +1,8 @@
-import os
 from flask import Flask, request
 from telegram import Bot, Update
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters, CallbackContext
 import openai
+from werkzeug.urls import url_quote_plus  # Используем url_quote_plus вместо url_quote
 
 app = Flask(__name__)
 
@@ -44,7 +44,7 @@ def webhook_handler():
     return 'ok'
 
 def set_webhook():
-    webhook_url = 'https://my-awesome-bot.onrender.com/hook'  # Замените на URL вашего сервера
+    webhook_url = 'https://telegram-chatgpt-bot-3ai3.onrender.com/hook'  # Замените на URL вашего сервера
     bot.set_webhook(webhook_url)
 
 if __name__ == '__main__':
