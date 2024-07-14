@@ -4,7 +4,7 @@ import openai
 import os
 
 # Установка токена вашего Telegram бота
-updater = Updater("TOKEN", use_context=True)
+updater = Updater("YOUR_BOT_TOKEN", use_context=True)
 
 # Функция-обработчик команды /start
 def start(update: Update, context: CallbackContext) -> None:
