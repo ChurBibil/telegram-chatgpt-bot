@@ -17,7 +17,7 @@ films = {
 
 # Функция-обработчик команды /start
 def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Привет! Я помогу тебе записывать фильмы и сериалы для просмотра. '
+    update.message.reply_text('Привет котёнок, крч пока ты в рилсах бальзамируешься, то находишь фильмы и сериалы, вот сюда их и ебашь, посмотрим" '
                               'Используй /add для добавления в список, /watched для отметки просмотренных, '
                               'и /list для просмотра списков.')
 
@@ -28,11 +28,11 @@ def add(update: Update, context: CallbackContext) -> None:
         film_name = msg[1]
         if film_name not in films['to_watch'] and film_name not in films['watched']:
             films['to_watch'].append(film_name)
-            update.message.reply_text(f'Фильм/сериал "{film_name}" добавлен в список для просмотра.')
+            update.message.reply_text(f'Фильм/сериал "{film_name}" уже в моей голове.')
         else:
             update.message.reply_text(f'Фильм/сериал "{film_name}" уже добавлен в список.')
     else:
-        update.message.reply_text('Используйте команду /add <название фильма или сериала>.')
+        update.message.reply_text('Используй команду /add <название фильма или сериала>.')
 
 # Функция-обработчик команды /watched для отметки просмотренного фильма или сериала
 def watched(update: Update, context: CallbackContext) -> None:
@@ -42,9 +42,9 @@ def watched(update: Update, context: CallbackContext) -> None:
         if film_name in films['to_watch']:
             films['to_watch'].remove(film_name)
             films['watched'].append(film_name)
-            update.message.reply_text(f'Фильм/сериал "{film_name}" отмечен как просмотренный.')
+            update.message.reply_text(f'Фильм/сериал "{film_name}" уже смотрели, че ебнулась.')
         elif film_name in films['watched']:
-            update.message.reply_text(f'Фильм/сериал "{film_name}" уже отмечен как просмотренный.')
+            update.message.reply_text(f'Фильм/сериал "{film_name}" смотрели мы, альцгеймерша.')
         else:
             update.message.reply_text(f'Фильм/сериал "{film_name}" не найден в списке.')
     else:
@@ -52,14 +52,14 @@ def watched(update: Update, context: CallbackContext) -> None:
 
 # Функция-обработчик команды /list для вывода списков фильмов и сериалов
 def list_films(update: Update, context: CallbackContext) -> None:
-    to_watch_str = "\n".join(films['to_watch']) if films['to_watch'] else "Список для просмотра пуст."
-    watched_str = "\n".join(films['watched']) if films['watched'] else "Список просмотренных пуст."
+    to_watch_str = "\n".join(films['to_watch']) if films['to_watch'] else "Нихуя нет еще."
+    watched_str = "\n".join(films['watched']) if films['watched'] else "Еще нихуя нет."
     update.message.reply_text(f'<b>Список для просмотра:</b>\n{to_watch_str}\n\n<b>Список просмотренных:</b>\n{watched_str}',
                               parse_mode='HTML')
 
 # Функция для обработки сообщений
 def handle_message(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Прости, я не понимаю тебя. Используй /start для начала работы.')
+    update.message.reply_text('Кись, ну че думаешь я илон маск, хуйню не неси, заново давай. Используй /start для начала работы.')
 
 def main() -> None:
     # Создаем Updater и передаем ему токен вашего бота
