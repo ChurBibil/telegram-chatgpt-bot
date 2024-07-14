@@ -1,42 +1,36 @@
-import os
-import openai
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackContext
+import openai
+import os
 
-# Получаем токен и chat_id из переменных окружения
-TOKEN = os.getenv("TOKEN")
-YOUR_CHAT_ID = int(os.getenv("YOUR_CHAT_ID"))
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Установка токена вашего Telegram бота
+updater = Updater("TOKEN", use_context=True)
 
-openai.api_key = OPENAI_API_KEY
+# Функция-обработчик команды /start
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Привет! Отправь мне название фильма, и я предложу о чем поговорить!')
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text('Мой дорогой чурбибиль, напиши че ты там хочешь глянуть ну или спроси какую-нибудь залупу, я к твоим услугам даже если сплю или занят')
+updater.dispatcher.add_handler(CommandHandler("start", start))
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    text = update.message.text
-    
-    # Проверка на наличие ссылки на фильм
-    if 'http' in text:
-        await context.bot.send_message(chat_id=YOUR_CHAT_ID, text=f'Фильм: {text}')
-        await update.message.reply_text('Понял, глянем')
-    else:
-        # Отправляем запрос в ChatGPT
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=text,
-            max_tokens=150
-        )
-        reply = response.choices[0].text.strip()
-        await update.message.reply_text(reply)
+# Функция-обработчик сообщений с фильмами
+def handle_message(update: Update, context: CallbackContext) -> None:
+    film_name = update.message.text
+    response = openai.ChatCompletion.create(
+        model="text-davinci-003",  # Модель ChatGPT
+        messages=[
+            {"role": "user", "content": film_name}
+        ],
+        max_tokens=50  # Максимальное количество токенов в ответе
+    )
+    update.message.reply_text(response['choices'][0]['text'])
 
+updater.dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
+# Основная функция, которая запускает бота
 def main() -> None:
-    application = ApplicationBuilder().token(TOKEN).build()
-
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    application.run_polling()
+    # Запуск бота
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == '__main__':
     main()
