@@ -1,24 +1,29 @@
-from telegram import Update
-from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackContext
+import os
+from flask import Flask, request
+from telegram import Bot, Update
+from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters, CallbackContext
 import openai
 
+app = Flask(__name__)
+
 # Установка токена вашего Telegram бота
-bot_token = "7054481464:AAFc2fKgQIvx-ywh7zoY_GM41-8R68-pcBQ"
+bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Убедитесь, что вы правильно вставили свой токен
-if not bot_token or bot_token == "YOUR_BOT_TOKEN":
+# Убедитесь, что переменные окружения установлены правильно
+if not bot_token:
     raise ValueError("Invalid Telegram bot token.")
+if not openai.api_key:
+    raise ValueError("Invalid OpenAI API key.")
 
-# Установка токена OpenAI API
-openai.api_key = "YOUR_OPENAI_API_KEY"
-
-updater = Updater(bot_token, use_context=True)
+bot = Bot(token=bot_token)
+dispatcher = Dispatcher(bot, None, use_context=True)
 
 # Функция-обработчик команды /start
 def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('Привет! Отправь мне название фильма, и я предложу о чем поговорить!')
 
-updater.dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(CommandHandler("start", start))
 
 # Функция-обработчик сообщений с фильмами
 def handle_message(update: Update, context: CallbackContext) -> None:
@@ -30,13 +35,18 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     )
     update.message.reply_text(response.choices[0].text.strip())
 
-updater.dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
-# Основная функция, которая запускает бота
-def main() -> None:
-    # Запуск бота
-    updater.start_polling()
-    updater.idle()
+@app.route('/hook', methods=['POST'])
+def webhook_handler():
+    update = Update.de_json(request.get_json(force=True), bot)
+    dispatcher.process_update(update)
+    return 'ok'
+
+def set_webhook():
+    webhook_url = 'https://my-awesome-bot.onrender.com/hook'  # Замените на URL вашего сервера
+    bot.set_webhook(webhook_url)
 
 if __name__ == '__main__':
-    main()
+    set_webhook()
+    app.run(port=8443)
